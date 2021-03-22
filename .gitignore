@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Clojure
+.nrepl*
+.cpcache
+.lsp
+clj.cp

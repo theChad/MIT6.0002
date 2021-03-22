@@ -1,6 +1,23 @@
 (ns ps1a
-  (:require [utils :as utils]
-            [clojure.pprint]))
+  (:require
+   [clojure.math.combinatorics :as combo]
+   [clojure.pprint]
+   [clojure.string :as s]))
+
+;;; Read in cow data file
+(defn load-cows
+  "Read the cow file into a map."
+  [cow-file]
+  (->>
+   cow-file
+   slurp
+   s/split-lines
+   (map #(s/split % #",")) ; [cow weight] lists
+   ;; Make the weight an integer and roll the pairs into a hashmap
+   (reduce #(assoc %1 (first %2) (Integer/parseInt (second %2))) {})))
+
+;;; First, the greedy algorithm
+
 
 ;;; Single knapsack filler
 (defn greedy-fill-knapsack
@@ -26,7 +43,7 @@
        (into (pop light-items) heavy-items)))))
 
 ;;; Greedy knapsack problem
-(defn greedy-fill-knapsacks
+(defn greedy-cow-transport
   "Greedily fill all knapsacks.
   knapsacks is a list of knapsacks filled so far
   items: remaining items and weights, sorted by weight
@@ -38,15 +55,65 @@
     ;; With items remaining, fill another knapsack.
     (let [[knapsack remaining-items]
           (greedy-fill-knapsack [] limit items)]
-      (greedy-fill-knapsacks
+      (greedy-cow-transport
        (conj knapsacks knapsack) remaining-items limit))))
   ;; Initial call, start with empty list of knapsacks
   ([items limit]
-   (greedy-fill-knapsacks [] items limit)))
+   (greedy-cow-transport [] (sort-by val items) limit))
+  ([items]
+   (greedy-cow-transport items 10)))
 
-(def el-list [["a" 23] ["b" 34] ["c" 36] ["d" 45] ["e" 56] ["f" 68]])
-(clojure.pprint/pprint (greedy-fill-knapsacks el-list 102))
 
+;;; Now the brute force algorithm
+
+(defn barge-weight
+  "Get the total weight of a barge"
+  [barge]
+  (apply + (map second barge)))
+
+(defn valid-barges?
+  "True if no barges are over the limit."
+  [limit barges]
+  (every? (partial >= limit) (map barge-weight barges)))
+
+;;; Brute force knapsack problem
+(defn brute-force-cow-transport
+  "Find the optimal transport situation by brute force.
+  Starting with the fewest number of barges and going up,
+  test every possible transport situation until one works.
+  cows: dictionary of cow-name: weight
+  limit: max weight per barge."
+  ([cows limit]
+   (first
+    (filter (partial valid-barges? limit)
+            (combo/partitions cows)))
+   )
+  ([cows] (brute-force-cow-transport cows 10))
+  )
+
+
+;;; Comparing algorithms
+(defn compare-cow-transport-algorithms
+  "Print out a comparision of the time it took the algos to run."
+  []
   
+  (let [algos [greedy-cow-transport brute-force-cow-transport]
+        cow-list (load-cows "../resources/ps1_cow_data.txt")]
+    (doseq [algo algos]
+      (print algo "running. ")
+      (time (algo cow-list)))))
+
+(defn test-algos
+  []
+  (def cow-list (load-cows "../resources/ps1_cow_data.txt"))
+  (println cow-list)
+  (def el-list {"a" 23 "b" 34 "c" 36 "d" 45 "e" 56 "f" 68})
+  (println (combo/partitions [1 2 3]))
+  (clojure.pprint/pprint (greedy-cow-transport cow-list 10))
+  (clojure.pprint/pprint (brute-force-cow-transport cow-list))
+  (compare-cow-transport-algorithms))
+
+ (test-algos)
      
      
+
