@@ -22,15 +22,35 @@ def dp_make_weight(egg_weights, target_weight, memo = {}):
     
     Returns: int, smallest number of eggs needed to make target weight
     """
-    # TODO: Your code here
-    pass
+    # Recursively find minimum eggs.
+    # Base case: target weight is zero. Already full.
+    if target_weight==0: return 0
+    # Check to see if this call is already cached.
+    if memo.get((egg_weights, target_weight)):
+        return memo[(egg_weights, target_weight)]
+    # Possible new target weights, depending on which
+    # egg is added.
+    new_target_weights = [target_weight - egg_weight
+                          for egg_weight in egg_weights
+                          if egg_weight <= target_weight]
+    # List of possible numbers of eggs left to put in bag
+    num_eggs = [dp_make_weight(egg_weights, t_weight, memo)
+                for t_weight in new_target_weights]
+    # Pick the smallest number remaining,
+    # increment due to choosing a weight to add
+    # in the current call.
+    min_eggs = 1 + min(num_eggs)
+    # Update the memoization dictionary
+    memo[(egg_weights, target_weight)] = min_eggs
+    return min_eggs
+    
 
 # EXAMPLE TESTING CODE, feel free to add more if you'd like
-if __name__ == '__main__':
-    egg_weights = (1, 5, 10, 25)
-    n = 99
-    print("Egg weights = (1, 5, 10, 25)")
-    print("n = 99")
-    print("Expected ouput: 9 (3 * 25 + 2 * 10 + 4 * 1 = 99)")
-    print("Actual output:", dp_make_weight(egg_weights, n))
-    print()
+#if __name__ == '__main__':
+egg_weights = (1, 5, 10, 25)
+n = 99
+print("Egg weights = (1, 5, 10, 25)")
+print("n = 99")
+print("Expected ouput: 9 (3 * 25 + 2 * 10 + 4 * 1 = 99)")
+print("Actual output:", dp_make_weight(egg_weights, n))
+print()

@@ -100,16 +100,18 @@
   (let [algos [greedy-cow-transport brute-force-cow-transport]
         cow-list (load-cows "../resources/ps1_cow_data.txt")]
     (doseq [algo algos]
-      (print algo "running. ")
+      (print (str algo " running. "))
       (time (algo cow-list)))))
 
 (defn test-algos
   []
   (def cow-list (load-cows "../resources/ps1_cow_data.txt"))
   (println cow-list)
-  (def el-list {"a" 23 "b" 34 "c" 36 "d" 45 "e" 56 "f" 68})
-  (println (combo/partitions [1 2 3]))
+  ;;(def el-list {"a" 23 "b" 34 "c" 36 "d" 45 "e" 56 "f" 68})
+  ;;(println (combo/partitions [1 2 3]))
+  (print "Greedy: ")
   (clojure.pprint/pprint (greedy-cow-transport cow-list 10))
+  (print "Brute-force: ")
   (clojure.pprint/pprint (brute-force-cow-transport cow-list))
   (compare-cow-transport-algorithms))
 

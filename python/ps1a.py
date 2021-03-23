@@ -150,6 +150,6 @@ def compare_cow_transport_algorithms():
         start = time.time()
         algo(cows)
         stop = time.time()
-        print(algo.__name__, "ran in", stop-start)
+        print(algo.__name__, "ran in", 1000*(stop-start), "ms.")
     
     pass
