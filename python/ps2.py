@@ -46,18 +46,20 @@ def load_map(map_filename):
     map_graph = Digraph()
     with open(map_filename) as map_file:
         for edge_line in map_file.readlines():
-            edge_info = [int(d) for d in edge_line.split(" ")]
+            edge_info = edge_line.split(" ")
             source_node = Node(edge_info[0])
             dest_node = Node(edge_info[1])
-            edge = WeightedEdge(source_node, dest_node, edge_info[2], edge_info[3])
+            edge = WeightedEdge(source_node, dest_node, int(edge_info[2]), int(edge_info[3]))
+            # Add nodes if not in graph
             if not map_graph.has_node(source_node):
                 map_graph.add_node(source_node)
             if not map_graph.has_node(dest_node):
                 map_graph.add_node(dest_node)
+            # Add edge
             map_graph.add_edge(edge)
 
-    print(map_graph)
-    
+    #print(map_graph)
+    return map_graph
     print("Loading map from file...")
 
 # Problem 2c: Testing load_map
@@ -109,8 +111,56 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then return None.
     """
-    # TODO
-    pass
+
+    # For current path
+    if path:
+        path_node_names = path[0].copy()
+        path_distance = path[1]
+        path_outside_distance = path[2]
+    else:
+        path_node_names = [start.get_name()]
+        path_distance = 0
+        path_outside_distance = 0
+    # Reached the end, return the path
+    if start == end:
+        return (path_node_names, path_distance)
+    
+    # Eliminate edges that would go over the outside distance limit
+    # (which is decreased with every edge, so it's tne max for the
+    # rest of the path).
+    # Also eliminate paths that aren't better than the current best distance.
+    # Also elimnate cycles.
+    path_node_names_set = set(path_node_names)
+    edges_out = [e for e in digraph.get_edges_for_node(start)
+                  if (e.get_outdoor_distance() <= max_dist_outdoors and
+                      e.get_total_distance() + path_distance < best_dist and
+                      not e.get_destination().get_name() in path_node_names_set)]
+    # Return None if no more paths lead out
+    if not edges_out: return None
+    
+    # Find the edge with the minimum distance
+    min_edge = min(edges_out, key = lambda e: e.get_total_distance())
+
+    best_paths = []
+    # Get the best path so far
+    for e in edges_out:
+        e_best_path = get_best_path(digraph, e.get_destination(), end,
+                                    [path_node_names + [e.get_destination().get_name()],
+                                     path_distance + e.get_total_distance(),
+                                     path_outside_distance + e.get_outdoor_distance()],
+                                    max_dist_outdoors - e.get_outdoor_distance(),
+                                    best_dist, best_path)
+        if e_best_path and e_best_path[1] < best_dist:
+            best_path = e_best_path[0]
+            best_dist = e_best_path[1]
+            best_paths.append(e_best_path)    
+
+    # If any paths are a new contender, find the best of them.
+    if best_paths:
+        return min(best_paths, key = lambda p: p[1])
+    elif best_path:
+        return best_path, best_dist
+    return None
 
 
 # Problem 3c: Implement directed_dfs
