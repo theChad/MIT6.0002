@@ -98,14 +98,14 @@
   []
   
   (let [algos [greedy-cow-transport brute-force-cow-transport]
-        cow-list (load-cows "../resources/ps1_cow_data.txt")]
+        cow-list (load-cows "ps1/ps1_cow_data.txt")]
     (doseq [algo algos]
       (print (str algo " running. "))
       (time (algo cow-list)))))
 
 (defn test-algos
   []
-  (def cow-list (load-cows "../resources/ps1_cow_data.txt"))
+  (def cow-list (load-cows "ps1/ps1_cow_data.txt"))
   (println cow-list)
   ;;(def el-list {"a" 23 "b" 34 "c" 36 "d" 45 "e" 56 "f" 68})
   ;;(println (combo/partitions [1 2 3]))
