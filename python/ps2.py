@@ -121,6 +121,9 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         path_node_names = [start.get_name()]
         path_distance = 0
         path_outside_distance = 0
+    # Make sure nodes are valid
+    if not (digraph.has_node(start) and digraph.has_node(end)):
+        raise NameError("Start and end nodes not both in map.")
     # Reached the end, return the path
     if start == end:
         return (path_node_names, path_distance)
@@ -192,8 +195,9 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then raises a ValueError.
     """
-    # TODO
-    pass
+    best_path = get_best_path(digraph, Node(start), Node(end), [], max_dist_outdoors, max_total_dist, [])
+    if not best_path: raise ValueError("No path under constraints.")
+    return best_path[0]
 
 
 # ================================================================
@@ -204,7 +208,7 @@ class Ps2Test(unittest.TestCase):
     LARGE_DIST = 99999
 
     def setUp(self):
-        self.graph = load_map("mit_map.txt")
+        self.graph = load_map("../resources/mit_map.txt")
 
     def test_load_map_basic(self):
         self.assertTrue(isinstance(self.graph, Digraph))
