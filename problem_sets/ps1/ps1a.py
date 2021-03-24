@@ -145,7 +145,7 @@ def compare_cow_transport_algorithms():
     Does not return anything.
     """
     algos = [greedy_cow_transport, brute_force_cow_transport]
-    cows = load_cows("../resources/ps1_cow_data.txt")
+    cows = load_cows("ps1_cow_data.txt")
     for algo in algos:
         start = time.time()
         algo(cows)
