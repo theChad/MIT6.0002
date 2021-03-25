@@ -15,7 +15,8 @@
   "Internal. Add an edge to a digraph (but not nodes)."
   [digraph edge]
   (if (every? (:nodes digraph) (nodes-in-edge edge))
-    (assoc-in digraph [:edges (:start-node edge)] edge)
+    (update-in digraph [:edges (:start-node edge)]
+               (fnil #(conj % edge) []))
     (throw (AssertionError. "Node not in graph.")))
   )
 
@@ -23,6 +24,16 @@
   "Add a node to a digraph."
   [digraph node]
   (update digraph :nodes #(conj % node)))
+
+(defn remove-node
+  "Remove a node from the digraph.
+  For the sake of efficiency, only removes
+  the node from the node set and edges keys.
+  Node may still be an end-node of some edges."
+  [digraph node]
+  (-> digraph
+      (update :edges dissoc node)
+      (update :nodes disj node)))
 
 (defn add-edge
   "Add an edge (and nodes if required) to a digraph."
@@ -59,6 +70,16 @@
        (map edge-from-string)
        (reduce add-edge (Digraph. #{} {}))))
 
+;;; Access functions
+(defn get-edges-from-source
+  "Return a collection of edges originating at start-node."
+  [digraph start-node]
+  (get (:edges digraph) start-node))
+
+(defn contains-node?
+  "True if the digraph contains the node in its node set."
+  [digraph node]
+  (contains? (:nodes digraph) node))
 ;;; Testing some of the functions
 
 (defn test-add
