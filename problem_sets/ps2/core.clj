@@ -40,11 +40,8 @@
   min-total-distance: min distance from dfs calls at this level"
   [digraph start end max-total-distance max-distance-outdoors
    min-total-distance next-edge]
-  (let [new-max-total-dist (- max-total-distance
-                              (:total-distance next-edge)
-                              (if min-total-distance
-                                min-total-distance
-                                0))
+  (let [new-max-total-dist (- (or min-total-distance max-total-distance)
+                              (:total-distance next-edge))
         new-max-dist-outdoors (- max-distance-outdoors
                                  (:outdoor-distance next-edge))
         new-start (:end-node next-edge)]
@@ -54,13 +51,22 @@
      start (:total-distance next-edge))
     ))
 
-(defn reduce-min-path
-  "Choose the minimum path from two paths. Return nil if
-  both nil."
-  [path-1 path-2]
-  (if (every? nil? [path-1 path-2]) nil
-      (apply min-key second (filter some? [path-1 path-2])))
-  )
+(defn roll-function
+  "Call a function of two variables, returning either the first
+  argument or the result of the function.
+  Specific to this module, f is given the second element of
+  prev-result, which here will be the current best path distance."
+  [f prev-result next-arg]
+  (or (f (second prev-result) next-arg) prev-result))
+
+;;; directed-dfs will call itself recursively, with the help
+;;; of next-dfs-call to set up parameters and complete the
+;;; path returned by the function. The max total distances
+;;; are adjusted for that point in the graph, taking into
+;;; account the paths already traversed up the graph, as well
+;;; as any completed paths. It will return nil if it can't fine
+;;; a path that satisfies the max constraints (which includes
+;;; being no longer than a path already found).
 
 (defn directed-dfs
   "Perform a depth-first search on a directed graph.
@@ -82,11 +88,16 @@
     (let [next-edges (valid-edges digraph max-total-distance max-dist-outdoors
                                   (graph/get-edges-from-source digraph start))
           new-digraph (dissoc digraph start)]
-      ;;(println next-edges)
-      (reduce #(reduce-min-path %1
-                                (next-dfs-call digraph start end max-total-distance
-                                               max-dist-outdoors (second %1) %2))
-              nil next-edges))))
+      ;; Usually I'd use a map and reduce, but to avoid going down
+      ;; pointless paths, each subsequent call to directed-dfs needs
+      ;; an updated max-total-distance. That also guarantees that
+      ;; new results from directed-dfs will be shorter paths than
+      ;; old results (if it doesn't return nil), so or will take care of it.
+      (reduce (partial roll-function
+                       (partial next-dfs-call digraph start end
+                                max-total-distance max-dist-outdoors))
+              nil next-edges)
+      )))
 
 
 (defn test-dfs
