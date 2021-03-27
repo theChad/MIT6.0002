@@ -22,7 +22,7 @@ from graph import Digraph, Node, WeightedEdge
 # Answer:
 #
 
-
+counter = 0
 # Problem 2b: Implementing load_map
 def load_map(map_filename):
     """
@@ -111,7 +111,9 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then return None.
     """
-
+    global counter
+    counter += 1
+    print(path)
     # For current path
     if path:
         path_node_names = path[0].copy()
