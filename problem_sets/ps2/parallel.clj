@@ -60,33 +60,44 @@
   (if (every? nil? paths) nil
       (apply min-key second (filter some? paths))))
 
+;; Need to add in maximizing max-dist-outdoors (it represent remaining outdoor distance).
+;; path-too-long? and update-node-dist both need this.
 (defn path-too-long?
   "Determine whether the current path is too long, given
   the best distance. Check both the total best distance
   for a finished path and the best distance for the
-  endpoint of the given path."
-  [path best-dist]
+  endpoint of the given path. Also need to make sure
+  this path's max-outside-dist is greater than the lowest
+  max encountered so far."
+  [path best-dist max-dist-outdoors]
   (or (if-let [final-best-dist (:final @best-dist)]
         (>= (second path) final-best-dist))
-      (if-let [node-best-dist (get @best-dist (last (first path)))]
-        (>= (second path) node-best-dist))))
+      (and (if-let [node-best-dist (get (:total @best-dist) (last (first path)))]
+             (>= (second path) node-best-dist))
+           (if-let [node-max-outside (get (:outside @best-dist) (last (first path)))]
+             (<= max-dist-outdoors node-max-outside)))))
 
 (defn update-node-dist
   "Update the distance for a particular node in a hashmap.
   Only update if the new-dist is a new minimum."
-  [node-dist-map node new-dist]
-  (assoc node-dist-map node
-         (if (get node-dist-map node)
-           (min (node-dist-map node) new-dist)
-           new-dist)))
+  [node-dist-map node new-dist max-dist-outdoors]
+  (-> node-dist-map  
+      (update-in [:total node]
+                 #(if %
+                    (min % new-dist)
+                    new-dist))
+      (update-in [:outside node]
+                 #(if %
+                    (max % max-dist-outdoors)
+                    max-dist-outdoors))))
 
 (defn update-best-dist
   "Update the best-dist hashmap.
   path: [[path] path-dist]
   best-dist: hashmap of {node: shortest-distance-to-node}
   node: last node of path, or :final if at final goal."
-  [path best-dist node]
-  (swap! best-dist #(update-node-dist % node (second path))))
+  [path max-dist-outdoors best-dist node] 
+  (swap! best-dist #(update-node-dist % node (second path) max-dist-outdoors)))
 
 
 ;;; directed-dfs will call itself recursively, with the help
@@ -116,12 +127,12 @@
   (cond
     (not (and (graph/contains-node? digraph start)
               (graph/contains-node? digraph end)
-              (not (path-too-long? path best-dist))))
+              (not (path-too-long? path best-dist max-dist-outdoors))))
     ;; Nodes not in digraph, or path is longer than shortest path, return nil
     nil
     (= start end)
     ;; At the end, update best-dist and return the path.
-    (do (update-best-dist path best-dist :final)
+    (do (update-best-dist path max-dist-outdoors best-dist :final)
         path)
     :else
     (let [next-edges (valid-edges digraph max-total-distance max-dist-outdoors
@@ -130,7 +141,7 @@
 
       ;; First update the best-dist hashmap, since we're guaranteed to be
       ;; at the shortest route to the current (start) node.
-      (update-best-dist path best-dist start)
+      (update-best-dist path max-dist-outdoors best-dist start)
 
       ;; Usually I'd use a map and reduce, but to avoid going down
       ;; pointless paths, each subsequent call to directed-dfs needs
