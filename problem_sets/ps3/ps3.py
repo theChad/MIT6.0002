@@ -470,6 +470,7 @@ def run_simulation(num_robots, speed, capacity, width, height, dirt_amount, min_
     mean_time = total_time/num_trials
     return mean_time
 
+print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 2, 2, 1, 1.0, 50, StandardRobot)))
 print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
 print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.8, 50, StandardRobot)))
 print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.9, 50, StandardRobot)))

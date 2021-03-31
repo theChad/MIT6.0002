@@ -23,6 +23,39 @@
    :dirt-amount dirt-amount
    :tiles (dirty-tiles width height dirt-amount)})
 
+;;; Furnishing the room
+
+(defn random-nonfilling-slice
+  "Get a non-filling range of integers.
+  limit: exclusive top of the range
+  Returns a range within [0,limit)"
+  [limit]
+  (let [length (inc (rand-int (dec limit)))
+        start (rand-int (- limit (dec length)))]
+    (range start (+ start length))))
+
+(defn random-furniture
+  "Generate a random piece of furniture and return its tiles."
+  [width height]
+  (reduce conj #{}
+          (for [x (random-nonfilling-slice width)
+                y (random-nonfilling-slice height)]
+            (list x y)))
+  )
+
+(defn add-furniture-tile
+  "Convert a single room tile to furniture."
+  [room tile]
+  (-> room
+       (update :tiles #(dissoc % tile))
+       (update :furniture-tiles #((fnil conj #{}) % tile))))
+
+(defn furnish-room
+  "Add a piece of furniture to an empty room."
+  [room]
+  (reduce add-furniture-tile room (random-furniture (:width room)
+                                                    (:height room))))
+
 ;;; Cleaning the room
 
 (defn tile-from-pos
@@ -46,10 +79,15 @@
 
 ;;; Initializing the robot
 
+(defn get-random-tile
+  "Return a random (unfurnished) tile."
+  [room]
+  (rand-nth (seq (keys (:tiles room)))))
+
 (defn get-random-position
   "Return a random position in a room."
   [room]
-  (map #(rand (% room)) '(:width :height)))
+  (map #(+ % (rand 1)) (get-random-tile room)))
 
 (defn get-robot
   "Return a data structure representing a robot.
@@ -75,10 +113,8 @@
 (defn valid-position?
   "True if the given position is a valid one in the room."
   [room pos]
-  (every? true?
-   (map #(and (>= %1 0)
-              (<= %1 (%2 room)))
-        pos [:width :height])))
+  (let [tile (tile-from-pos pos)]
+    (contains? (:tiles room) tile)))
 
 (defn robot-move-one-step
   "Move a robot one step, if valid move.
@@ -149,11 +185,11 @@
 
 (defn test-fns
   []
-  (let [room (get-room 20 20 3)
+  (let [room (get-room 10 10 3)
         robot (get-robot room 1 3)]
-    (println robot)
+    (println room)
     (println (percent-tiles-clean room))
-    (run-simulation 1 room 1 1 0.5 50)
+    (run-simulation 1 room 1 1 0.8 50)
     ))
 
 (test-fns)
