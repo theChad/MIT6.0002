@@ -124,8 +124,7 @@
                                  (:speed robot)
                                  (:direction robot))]
     (if (valid-position? room new-pos)
-      (assoc robot :position new-pos
-             :direction (rand 360))
+      (assoc robot :position new-pos)
       nil)))
 
 (defn robot-take-action
@@ -144,8 +143,8 @@
 (defn percent-tiles-clean
   "Percentage of tiles in the room that are clean."
   [room]
-  (/ (count (filter #(= 0 (second %)) (:tiles room)))
-     (* (:width room) (:height room))))
+  (/ (count (filter #(= 0 %) (vals (:tiles room))))
+     (count (:tiles room))))
 
 ;;; Run simulation
 
@@ -162,7 +161,7 @@
   (reduce sim-reducer [[] room] robots))
 
 (defn run-one-sim
-  "Run a single simulation. Clean every tile."
+  "Run a single simulation until min-coverage percent of tiles are clean."
   [robots room min-coverage]
   (take-while #(> min-coverage (percent-tiles-clean (second %)))
               (iterate #(apply single-sim-step %) [robots room])))
@@ -189,7 +188,7 @@
         robot (get-robot room 1 3)]
     (println room)
     (println (percent-tiles-clean room))
-    (run-simulation 1 room 1 1 0.8 50)
+    (run-simulation 1 room 1 1 0.9 50)
     ))
 
 (test-fns)
