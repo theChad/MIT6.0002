@@ -113,33 +113,47 @@
 
 ;;; Run simulation
 
+(defn sim-reducer
+  "Reduction function for a single step of the simulation."
+  [[robots room] next-robot]
+  (let [[updated-robot updated-room]
+        (robot-take-action next-robot room)]
+    [(conj robots updated-robot) updated-room]))
+
+(defn single-sim-step
+  "Run a single single time step of a simulation."
+  [robots room]
+  (reduce sim-reducer [[] room] robots))
+
 (defn run-one-sim
   "Run a single simulation. Clean every tile."
-  [robot room min-coverage]
+  [robots room min-coverage]
   (take-while #(> min-coverage (percent-tiles-clean (second %)))
-              (iterate #(apply robot-take-action %) [robot room])))
+              (iterate #(apply single-sim-step %) [robots room])))
 
 (defn count-one-sim
   "Run one sim and return just the number of time steps."
-  [robot room min-coverage]
-  (count (run-one-sim robot room min-coverage)))
+  [robots room min-coverage]
+  (count (run-one-sim robots room min-coverage)))
 
 (defn run-simulation
   "Run several simulations."
-  [room speed capacity min-coverage num-sims]
-  (let [sim-time-lengths
+  [num-robots room speed capacity min-coverage num-sims]
+  (let [robots
+        (repeatedly num-robots #(get-robot room speed capacity))
+        sim-time-lengths
         (take num-sims (repeatedly
-                        #(count-one-sim (get-robot room speed capacity) room min-coverage)))]
+                        #(count-one-sim robots room min-coverage)))]
     (float (/ (apply + sim-time-lengths)
               (count sim-time-lengths)))))
 
 (defn test-fns
   []
-  (let [room (get-room 10 10 3)
+  (let [room (get-room 20 20 3)
         robot (get-robot room 1 3)]
     (println robot)
     (println (percent-tiles-clean room))
-    (run-simulation room 1 1 0.5 50)
+    (run-simulation 1 room 1 1 0.5 50)
     ))
 
 (test-fns)
